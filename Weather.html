@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced Weather App</title>
+
+<style>
+*{
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: linear-gradient(135deg,#74ebd5,#acb6e5);
+  transition:0.5s;
+}
+
+.container{
+  background:#fff;
+  width:340px;
+  padding:25px;
+  border-radius:18px;
+  text-align:center;
+  box-shadow:0 15px 30px rgba(0,0,0,0.2);
+  animation: pop 0.6s ease;
+}
+
+@keyframes pop{
+  from{transform:scale(0.8);opacity:0;}
+  to{transform:scale(1);opacity:1;}
+}
+
+h1{
+  margin-bottom:10px;
+}
+
+input{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+
+button{
+  margin-top:10px;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:8px;
+  background:#4CAF50;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#43a047;
+}
+
+#weather{
+  margin-top:15px;
+  animation: fade 0.8s;
+}
+
+@keyframes fade{
+  from{opacity:0;}
+  to{opacity:1;}
+}
+
+.error{
+  color:red;
+  font-weight:bold;
+}
+
+.night{
+  background: linear-gradient(135deg,#141e30,#243b55);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🌦 Weather App</h1>
+
+  <input type="text" id="city" placeholder="Enter city name">
+  <button onclick="getCityWeather()">Search City</button>
+  <button onclick="getLocationWeather()">📍 Use My Location</button>
+
+  <div id="weather"></div>
+</div>
+
+<script>
+const apiKey = 
+"31f35b235f44ae25d22f84a856d6579f";
+
+const weatherDiv = document.getElementById("weather");
+
+function updateUI(data){
+  const hour = new Date().getHours();
+  if(hour >= 18 || hour <= 6){
+    document.body.classList.add("night");
+  }else{
+    document.body.classList.remove("night");
+  }
+
+  weatherDiv.innerHTML = `
+    <h2>${data.name}, ${data.sys.country}</h2>
+    <h3>🌡 ${data.main.temp} °C</h3>
+    <p>${data.weather[0].description}</p>
+    <p>💧 Humidity: ${data.main.humidity}%</p>
+    <p>💨 Wind: ${data.wind.speed} m/s</p>
+  `;
+}
+
+function getCityWeather(){
+  const city = document.getElementById("city").value;
+  if(city===""){
+    weatherDiv.innerHTML = "<p class='error'>Enter city name</p>";
+    return;
+  }
+
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`)
+    .then(res=>res.json())
+    .then(data=>{
+      if(data.cod!==200){
+        weatherDiv.innerHTML="<p class='error'>City not found</p>";
+      }else{
+        updateUI(data);
+      }
+    });
+}
+
+function getLocationWeather(){
+  if(!navigator.geolocation){
+    weatherDiv.innerHTML="<p class='error'>Location not supported</p>";
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+
+    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+      .then(res=>res.json())
+      .then(data=>updateUI(data));
+  });
+}
+</script>
+
+</body>
+</html>
